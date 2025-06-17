@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { smmApi, SMMService } from '../lib/smmApi'
+import { smmProviders, SMMService } from '../lib/smmProviders'
 import { supabase } from '../lib/supabase'
 
 export const useSMMServices = () => {
@@ -11,8 +11,8 @@ export const useSMMServices = () => {
     setError(null)
 
     try {
-      // Fetch services from SMM API
-      const apiServices = await smmApi.getServices()
+      // Fetch services from SMM API providers
+      const apiServices = await smmProviders.getServices()
       
       // Transform API services to match our database schema
       const transformedServices = apiServices.map(service => ({
@@ -47,8 +47,23 @@ export const useSMMServices = () => {
     }
   }
 
+  const getProviderBalances = async () => {
+    try {
+      return await smmProviders.getBalance()
+    } catch (err) {
+      console.error('Error fetching provider balances:', err)
+      return []
+    }
+  }
+
+  const getProviderStatus = () => {
+    return smmProviders.getProviderStatus()
+  }
+
   return {
     syncServicesWithDatabase,
+    getProviderBalances,
+    getProviderStatus,
     loading,
     error
   }

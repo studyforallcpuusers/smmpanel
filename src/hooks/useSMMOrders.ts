@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { smmApi, SMMOrderRequest } from '../lib/smmApi'
+import { smmProviders, SMMOrderRequest } from '../lib/smmProviders'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -51,7 +51,7 @@ export const useSMMOrders = () => {
         quantity: orderData.quantity
       }
 
-      const smmOrder = await smmApi.createOrder(smmOrderRequest)
+      const smmOrder = await smmProviders.createOrder(smmOrderRequest)
 
       if (!smmOrder) {
         throw new Error('Failed to create order with SMM provider')
@@ -78,13 +78,24 @@ export const useSMMOrders = () => {
         throw new Error('Failed to save order to database')
       }
 
-      // Deduct balance
+      // Deduct balance and create transaction
       await supabase
         .from('users')
         .update({ 
           balance: userData.balance - orderData.charge 
         })
         .eq('id', user.id)
+
+      // Record transaction
+      await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type: 'order',
+          amount: -orderData.charge,
+          status: 'completed',
+          description: `Order #${dbOrder.id.slice(0, 8)}`
+        })
 
       return dbOrder
     } catch (err) {
@@ -98,7 +109,7 @@ export const useSMMOrders = () => {
 
   const updateOrderStatus = async (orderId: string, externalOrderId: string) => {
     try {
-      const smmOrder = await smmApi.getOrderStatus(externalOrderId)
+      const smmOrder = await smmProviders.getOrderStatus(externalOrderId)
       
       if (smmOrder) {
         await supabase
