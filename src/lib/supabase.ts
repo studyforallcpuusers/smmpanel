@@ -3,8 +3,20 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Check if environment variables are missing or contain placeholder values
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.')
+}
+
+if (supabaseUrl === 'your_supabase_project_url_here' || supabaseAnonKey === 'your_supabase_anon_key_here') {
+  throw new Error('Please replace the placeholder values in your .env file with your actual Supabase project URL and anon key.')
+}
+
+// Validate URL format
+try {
+  new URL(supabaseUrl)
+} catch (error) {
+  throw new Error(`Invalid Supabase URL format: ${supabaseUrl}. Please ensure your VITE_SUPABASE_URL is a valid URL (e.g., https://your-project-id.supabase.co)`)
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
